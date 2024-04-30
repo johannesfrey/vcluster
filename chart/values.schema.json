@@ -3107,6 +3107,7 @@
     },
     "serviceCIDR": {
       "type": "string",
+      "deprecated": true,
       "description": "ServiceCIDR holds the service cidr for the virtual cluster. Do not use this option anymore."
     },
     "pro": {
