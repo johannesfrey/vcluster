@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -149,7 +151,29 @@ func CreateHelm(ctx context.Context, options *CreateOptions, globalFlags *flags.
 	}
 
 	if isVClusterDeployed(release) {
-		currentValues, currentDistro, isLegacy, err := configValuesYAML(release)
+		encodedRelease, ok := release.Secret.Data["release"]
+		if !ok {
+			return fmt.Errorf("no helm release values")
+		}
+
+		// The helm release is a gzipped base64-encoded blob
+		d, err := base64.StdEncoding.DecodeString(string(encodedRelease))
+		if err != nil {
+			return err
+		}
+
+		reader := bytes.NewReader(d)
+		gzipReader, err := gzip.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		defer gzipReader.Close()
+
+		releaseRaw, err := io.ReadAll(gzipReader)
+		if err != nil {
+			return err
+		}
+		currentValues, currentDistro, isLegacy, err := configValuesYAML(release, releaseRaw)
 		if err != nil {
 			return err
 		}
@@ -306,7 +330,7 @@ func isVClusterDeployed(release *helm.Release) bool {
 // - Installation via helm
 // If there are no config values (installation via helm without customization) it returns the default config values based on the vcluster chart version.
 // Furthermore, it returns the distro as well as a bool that signalizes if the values are in legacy format.
-func configValuesYAML(release *helm.Release) ([]byte, string, bool, error) {
+func configValuesYAML(release *helm.Release, releaseRaw []byte) ([]byte, string, bool, error) {
 	// If we have a < v0.20 virtual cluster running
 	if semver.Compare("v"+release.Chart.Metadata.Version, "v0.20.0-alpha.0") == -1 {
 		// We have to infer the distro from the current chart name.
@@ -318,27 +342,52 @@ func configValuesYAML(release *helm.Release) ([]byte, string, bool, error) {
 		// if we don't have any current values (e.g. because it was installed via helm directly) we construct
 		// the legacy default values based on the current distro.
 		if len(release.Config) <= 0 {
+			config := struct {
+				Chart struct {
+					Values map[string]interface{} `json:"values"`
+				} `json:"chart"`
+			}{}
+
+			if err := yaml.Unmarshal(releaseRaw, &config); err != nil {
+				return nil, "", false, err
+			}
+
+			values, err := yaml.Marshal(config.Chart.Values)
+			if err != nil {
+				return nil, "", false, err
+			}
+
 			switch currentDistro {
 			case "k0s", "k3s":
-				cfg, err := legacyconfig.NewDefaultK3sLegacyConfig()
+				cfg := legacyconfig.LegacyK0sAndK3s{}
+				if err := cfg.UnmarshalYAMLStrict(values); err != nil {
+					return nil, "", false, err
+				}
+				// We have to reset disallowed fields that won't get migrated.
+				cfg.Syncer.VolumeMounts = nil
+				cfg.VCluster.Command = nil
+				cfg.VCluster.BaseArgs = nil
+
+				v, err := cfg.MarshalYAML()
 				if err != nil {
 					return nil, "", false, err
 				}
-				vals, err := cfg.MarshalYAML()
-				if err != nil {
-					return nil, "", false, err
-				}
-				return vals, "k3s", true, nil
+
+				return v, "k3s", true, nil
 			case "k8s", "eks":
-				cfg, err := legacyconfig.NewDefaultK8sLegacyConfig()
+				cfg := legacyconfig.LegacyK8s{}
+				if err := cfg.UnmarshalYAMLStrict(values); err != nil {
+					return nil, "", false, err
+				}
+				// We have to reset disallowed fields that won't get migrated.
+				cfg.Syncer.VolumeMounts = nil
+
+				v, err := cfg.MarshalYAML()
 				if err != nil {
 					return nil, "", false, err
 				}
-				vals, err := cfg.MarshalYAML()
-				if err != nil {
-					return nil, "", false, err
-				}
-				return vals, "k8s", true, nil
+
+				return v, "eks", true, nil
 			default:
 				return nil, "", false, fmt.Errorf("unknown distro")
 			}
