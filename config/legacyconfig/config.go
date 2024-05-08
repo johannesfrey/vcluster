@@ -1,8 +1,14 @@
 package legacyconfig
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/loft-sh/vcluster/config"
+	"go.uber.org/multierr"
 )
+
+var ErrUnsupported = errors.New("unsupported")
 
 type LegacyK0sAndK3s struct {
 	BaseHelm
@@ -16,6 +22,20 @@ type LegacyK0sAndK3s struct {
 
 func (c *LegacyK0sAndK3s) UnmarshalYAMLStrict(data []byte) error {
 	return config.UnmarshalYAMLStrict(data, c)
+}
+
+func (c *LegacyK0sAndK3s) Validate() error {
+	var err error
+	if len(c.BaseHelm.Rbac.Role.ExcludedAPIResources) > 0 {
+		err = multierr.Append(err, fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("rbac.role.excludedAPIResources is not supported anymore, please use rbac.role.overwriteRules instead")))
+	}
+	if len(c.Syncer.VolumeMounts) > 0 {
+		err = multierr.Append(err, fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("syncer.volumeMounts is not supported anymore, please remove this field or use syncer.extraVolumeMounts")))
+	}
+	if err != nil {
+		return multierr.Combine(err)
+	}
+	return nil
 }
 
 type LegacyK8s struct {

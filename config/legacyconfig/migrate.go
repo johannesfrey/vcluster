@@ -336,7 +336,7 @@ func convertBaseValues(oldConfig BaseHelm, newConfig *config.Config) error {
 		newConfig.RBAC.Role.Enabled = *oldConfig.Rbac.Role.Create
 	}
 	if len(oldConfig.Rbac.Role.ExcludedAPIResources) > 0 {
-		return fmt.Errorf("rbac.role.excludedAPIResources is not supported anymore, please use rbac.role.overwriteRules instead")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("rbac.role.excludedAPIResources is not supported anymore, please use rbac.role.overwriteRules instead"))
 	}
 
 	if len(oldConfig.Rbac.ClusterRole.ExtraRules) > 0 {
@@ -692,7 +692,7 @@ func convertSyncerConfig(oldConfig SyncerValues, newConfig *config.Config) error
 	newConfig.ControlPlane.StatefulSet.Persistence.AddVolumeMounts = append(newConfig.ControlPlane.StatefulSet.Persistence.AddVolumeMounts, oldConfig.ExtraVolumeMounts...)
 
 	if len(oldConfig.VolumeMounts) > 0 {
-		return fmt.Errorf("syncer.volumeMounts is not allowed anymore, please remove this field or use syncer.extraVolumeMounts")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("syncer.volumeMounts is not supported anymore, please remove this field or use syncer.extraVolumeMounts"))
 	}
 	if len(oldConfig.Resources.Limits) > 0 || len(oldConfig.Resources.Requests) > 0 {
 		newConfig.ControlPlane.StatefulSet.Resources = oldConfig.Resources
@@ -839,9 +839,9 @@ func migrateFlag(key, value string, newConfig *config.Config) error {
 
 		newConfig.Experimental.SyncSettings.TargetNamespace = value
 	case "service-name":
-		return fmt.Errorf("this is not supported anymore, the service needs to be the vCluster name")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("service-name is not supported anymore, the service needs to be the vCluster name"))
 	case "name":
-		return fmt.Errorf("this is not supported anymore, the name needs to be the helm release name")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("name is not supported anymore, the name needs to be the helm release name"))
 	case "set-owner":
 		if value == "false" {
 			newConfig.Experimental.SyncSettings.SetOwner = false
@@ -853,7 +853,7 @@ func migrateFlag(key, value string, newConfig *config.Config) error {
 
 		newConfig.ControlPlane.Proxy.BindAddress = value
 	case "port":
-		return fmt.Errorf("this is not supported anymore, the port needs to be 8443")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("port is not supported anymore, the port needs to be 8443"))
 	case "sync-all-nodes":
 		if value == "" || value == "true" {
 			newConfig.Sync.FromHost.Nodes.Selector.All = true
@@ -891,7 +891,7 @@ func migrateFlag(key, value string, newConfig *config.Config) error {
 		newConfig.Sync.ToHost.Pods.TranslateImage = mergeIntoMap(newConfig.Sync.ToHost.Pods.TranslateImage, strings.Split(value, ","))
 	case "enforce-node-selector":
 		if value == "false" {
-			return fmt.Errorf("this is not supported anymore, node selector will from now on always be enforced")
+			return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("enforce-node-selector=false is not supported anymore, node selector will from now on always be enforced"))
 		}
 	case "enforce-toleration":
 		if value == "" {
@@ -961,9 +961,9 @@ func migrateFlag(key, value string, newConfig *config.Config) error {
 		}
 		newConfig.ControlPlane.StatefulSet.HighAvailability.RetryPeriod = i
 	case "disable-plugins":
-		return fmt.Errorf("this is not supported anymore")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("disable-plugins is not supported anymore"))
 	case "plugin-listen-address":
-		return fmt.Errorf("this is not supported anymore")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("plugin-listen-address is not supported anymore"))
 	case "default-image-registry":
 		return fmt.Errorf("shouldn't be used directly, use defaultImageRegistry instead")
 	case "enforce-pod-security-standard":
@@ -1054,13 +1054,13 @@ func convertVClusterConfig(oldConfig VClusterValues, retDistroCommon *config.Dis
 	}
 
 	if len(oldConfig.BaseArgs) > 0 {
-		return fmt.Errorf("vcluster.baseArgs is not supported anymore, please use controlPlane.distro.k3s.command or controlPlane.distro.k3s.extraArgs instead")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("vcluster.baseArgs is not supported anymore, please use controlPlane.distro.k3s.command or controlPlane.distro.k3s.extraArgs instead"))
 	}
 	if len(oldConfig.Command) > 0 {
-		return fmt.Errorf("vcluster.command is not supported anymore, please use controlPlane.distro.k3s.command or controlPlane.distro.k3s.extraArgs instead")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("vcluster.command is not supported anymore, please use controlPlane.distro.k3s.command or controlPlane.distro.k3s.extraArgs instead"))
 	}
 	if oldConfig.PriorityClassName != "" {
-		return fmt.Errorf("vcluster.priorityClassName is not supported anymore, please manually upgrade this field")
+		return fmt.Errorf("%w: %w", ErrUnsupported, fmt.Errorf("vcluster.priorityClassName is not supported anymore, please manually upgrade this field"))
 	}
 
 	newConfig.ControlPlane.StatefulSet.Persistence.AddVolumeMounts = append(newConfig.ControlPlane.StatefulSet.Persistence.AddVolumeMounts, oldConfig.ExtraVolumeMounts...)
