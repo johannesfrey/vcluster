@@ -1,7 +1,5 @@
 ---
 global:
-  indexerConfig:
-    type: local
   measurements:
     - name: podLatency
 jobs:
@@ -19,6 +17,6 @@ jobs:
       - objectTemplate: templates/secret.yaml
         replicas: 500
     churnPercent: 10
-    churnDuration: 5m 
+    churnDuration: 5m
     churnDelay: 15s
     churn: true
