@@ -2,6 +2,20 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vcluster.com/schemas/config",
   "$defs": {
+    "Audit": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enabled specifies that the audit logs for the vCluster control plane should be enabled."
+        },
+        "level": {
+          "type": "integer",
+          "description": "Level is an optional log level for audit logs."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "BackingStore": {
       "properties": {
         "etcd": {
@@ -3148,6 +3162,11 @@
     "telemetry": {
       "$ref": "#/$defs/Telemetry",
       "description": "Configuration related to telemetry gathered about vCluster usage."
+    },
+    "audit": {
+      "$ref": "#/$defs/Audit",
+      "description": "Configuration related to audit logs for the vCluster control plane.",
+      "pro": true
     },
     "serviceCIDR": {
       "type": "string",

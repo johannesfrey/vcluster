@@ -66,6 +66,9 @@ type Config struct {
 	// Configuration related to telemetry gathered about vCluster usage.
 	Telemetry Telemetry `json:"telemetry,omitempty"`
 
+	// Configuration related to audit logs for the vCluster control plane.
+	Audit *Audit `json:"audit,omitempty" product:"pro"`
+
 	// ServiceCIDR holds the service cidr for the virtual cluster. Do not use this option anymore.
 	ServiceCIDR string `json:"serviceCIDR,omitempty"`
 
@@ -74,6 +77,10 @@ type Config struct {
 
 	// Plugin specifies which vCluster plugins to enable. Use "plugins" instead. Do not use this option anymore.
 	Plugin map[string]Plugin `json:"plugin,omitempty"`
+}
+
+func (c Config) JSONSchemaExtend(base *jsonschema.Schema) {
+	addProToJSONSchema(base, reflect.TypeOf(c))
 }
 
 // Integrations holds config for vCluster integrations with other operators or tools running on the host cluster
@@ -271,6 +278,10 @@ func (c *Config) IsProFeatureEnabled() bool {
 	}
 
 	if len(c.External["platform"]) > 0 {
+		return true
+	}
+
+	if c.Audit != nil {
 		return true
 	}
 
@@ -1628,6 +1639,15 @@ type Telemetry struct {
 	MachineID          string `json:"machineID,omitempty"`
 	PlatformUserID     string `json:"platformUserID,omitempty"`
 	PlatformInstanceID string `json:"platformInstanceID,omitempty"`
+}
+
+type Audit struct {
+	// Enabled specifies that the audit logs for the vCluster control plane should be enabled.
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Level is an optional log level for audit logs.
+	// It defaults to 1.
+	Level int `json:"level,omitempty"`
 }
 
 type Experimental struct {
