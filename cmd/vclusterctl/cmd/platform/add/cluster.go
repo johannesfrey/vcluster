@@ -173,7 +173,8 @@ func (cmd *ClusterCmd) Run(ctx context.Context, args []string) error {
 			"--create-namespace",
 			"--namespace", namespace,
 			"--set", "agentOnly=true",
-			"--set", "kube-state-metrics.enabled=true",
+			"--set", "prometheus.enabled=true",
+			"--set", "prometheus-opencost-exporter.enabled=true",
 			"--set", "image=" + cmp.Or(os.Getenv("DEVELOPMENT_IMAGE"), "ghcr.io/loft-sh/enterprise:release-test"),
 		}
 	} else {
