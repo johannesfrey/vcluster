@@ -652,8 +652,6 @@ exportKubeConfig:
     namespace: ""
   additionalSecrets: []
 
-external: {}
-
 plugins: {}
 
 experimental:
@@ -674,3 +672,11 @@ telemetry:
 
 logging:
   encoding: console
+
+sleep: {}
+
+snapshots: {}
+
+deletion: {}
+
+platform: {}
