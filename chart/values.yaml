@@ -1210,9 +1210,6 @@ exportKubeConfig:
   # generated virtual cluster kubeconfigs.
   additionalSecrets: []
 
-# External holds configuration for tools that are external to the vCluster.
-external: {}
-
 # Define which vCluster plugins to load.
 plugins: {}
 
@@ -1249,3 +1246,139 @@ telemetry:
 logging:
   # Encoding specifies the format of vCluster logs, it can either be json or console.
   encoding: console
+
+# SleepMode holds the native sleep mode configuration for Pro clusters
+sleepMode:
+  # Enabled toggles the sleep mode functionality, allowing for disabling sleep mode without removing other config
+  enabled: false
+  
+  # Timezone represents the timezone a sleep schedule should run against, defaulting to UTC if unset
+  timeZone: ""
+  
+  # AutoSleep holds autoSleep details
+  autoSleep:
+    # AfterInactivity represents how long a vCluster can be idle before workloads are automaticaly put to sleep
+    afterInactivity: ""
+    # Schedule represents a cron schedule for when to sleep workloads
+    schedule: ""
+    # Exclude holds configuration for labels that, if present, will prevent a workload from going to sleep
+    exclude:
+      selector:
+        labels: {}
+  
+  # AutoWakeup holds configuration for waking the vCluster on a schedule rather than waiting for some activity.
+  autoWakeup:
+    schedule: ""
+
+# Snapshots holds configuration for automatic vCluster snapshots.
+# This is a top-level field that replaces external.platform.autoSnapshot.
+snapshots:
+  # Enabled defines whether auto snapshot is enabled for the virtual cluster
+  # +optional
+  enabled: false
+  
+  # Timezone specifies time zone used for scheduled virtual cluster operations. Defaults to UTC.
+  # Accepts the same format as time.LoadLocation() in Go (https://pkg.go.dev/time#LoadLocation).
+  # The value should be a location name corresponding to a file in the IANA Time Zone database, such as "America/New_York".
+  # +optional
+  timezone: ""
+  
+  # Schedule specifies a scheduled time in Cron format, see https://en.wikipedia.org/wiki/Cron for a virtual cluster snapshot to be taken
+  # +optional
+  schedule: ""
+  
+  # Volumes specifies configuration for volume snapshots
+  # +optional
+  volumes:
+    # Enabled specifies whether a snapshot should also include volumes in the snapshot
+    # +optional
+    enabled: false
+  
+  # Storage specifies where the snapshot will be stored
+  # +optional
+  storage:
+    # Type specifies supported type of storage services for a snapshot S3/OCI/Container, see https://www.vcluster.com/docs/vcluster/manage/backup-restore#store-snapshots-in-s3-buckets
+    # +optional
+    type: ""
+    # S3 holds configuration for storing snapshots in S3-compatible bucket
+    # +optional
+    s3:
+      # Url specifies url to the storage service
+      # +optional
+      url: ""
+      # Credential secret with the S3 Credentials, it should contain AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
+      # +optional
+      credential: {}
+    # OCI holds configuration for storing snapshots in OCI image registries
+    # +optional
+    oci:
+      # Repository OCI repository to store the snapshot
+      # +optional
+      repository: ""
+      # Credential secret with the OCI Credentials
+      # +optional
+      credential: {}
+      # Username to authenticate with the OCI registry
+      # +optional
+      username: ""
+      # Password to authenticate with the OCI registry
+      # +optional
+      password: ""
+    # Container holds configuration for storing snapshots as local files inside a vCluster container
+    # +optional
+    container:
+      # Path specifies directory to store the snapshot
+      # +optional
+      path: ""
+      # Volume specifies which volume needs to be mounted into the container to store the snapshot
+      # +optional
+      volume:
+        # Name to be used to mount the volume
+        # +optional
+        name: ""
+        # Path to the volume mount
+        # +optional
+        path: ""
+  
+  # Retention specifies how long snapshots will be kept
+  # +optional
+  retention:
+    # Period defines the number of days a snapshot will be kept
+    # +optional
+    period: 0
+    # MaxSnapshots defines the number of snapshots that can be taken
+    # +optional
+    maxSnapshots: 0
+
+# Deletion holds configuration for automatic vCluster deletion.
+# This is a top-level field that replaces external.platform.autoDelete.
+deletion:
+  # Prevent prevents the vCluster from being deleted
+  # +optional
+  prevent: false
+  
+  # AfterInactivity specifies after how long of inactivity the virtual cluster will be deleted.
+  # Uses Go duration format (e.g., "720h" for 30 days).
+  # +optional
+  afterInactivity: ""
+
+# Platform holds vCluster Platform specific configuration.
+# This is a top-level field that replaces external.platform.apiKey and external.platform.project.
+platform:
+  # APIKey defines where to find the platform access key and host. By default, vCluster will search in the following locations in this precedence:
+  # * environment variable called LICENSE
+  # * secret specified under platform.apiKey.secretName
+  # * secret called "vcluster-platform-api-key" in the vCluster namespace
+  apiKey:
+    # SecretName is the name of the secret where the platform access key is stored. This defaults to vcluster-platform-api-key if undefined.
+    # +optional
+    secretName: ""
+    # Namespace defines the namespace where the access key secret should be retrieved from. If this is not equal to the namespace
+    # where the vCluster instance is deployed, you need to make sure vCluster has access to this other namespace.
+    # +optional
+    namespace: ""
+    # CreateRBAC will automatically create the necessary RBAC roles and role bindings to allow vCluster to read the secret specified
+    # in the above namespace, if specified.
+    # This defaults to true.
+    # +optional
+    createRBAC: true

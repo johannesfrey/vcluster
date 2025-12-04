@@ -652,8 +652,6 @@ exportKubeConfig:
     namespace: ""
   additionalSecrets: []
 
-external: {}
-
 plugins: {}
 
 experimental:
@@ -674,3 +672,50 @@ telemetry:
 
 logging:
   encoding: console
+
+sleepMode:
+  enabled: false
+  timeZone: ""
+  autoSleep:
+    afterInactivity: ""
+    schedule: ""
+    exclude:
+      selector:
+        labels: {}
+  autoWakeup:
+    schedule: ""
+
+snapshots:
+  enabled: false
+  timezone: ""
+  schedule: ""
+  volumes:
+    enabled: false
+  storage:
+    type: ""
+    s3:
+      url: ""
+      credential: {}
+    oci:
+      repository: ""
+      credential: {}
+      username: ""
+      password: ""
+    container:
+      path: ""
+      volume:
+        name: ""
+        path: ""
+  retention:
+    period: 0
+    maxSnapshots: 0
+
+deletion:
+  prevent: false
+  afterInactivity: ""
+
+platform:
+  apiKey:
+    secretName: ""
+    namespace: ""
+    createRBAC: true
