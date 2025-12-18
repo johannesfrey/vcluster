@@ -257,7 +257,7 @@ func CreateHelm(ctx context.Context, options *CreateOptions, globalFlags *flags.
 		}
 
 		if len(cmd.Values) == 0 {
-			if err := confirmExperimental(currentVClusterConfig, currentValues, log); err != nil {
+			if err := confirmConfigIncompatibility(currentVClusterConfig, currentValues, log); err != nil {
 				return err
 			}
 		}
@@ -427,9 +427,9 @@ var advisors = map[string]func() (warning string){
 	"sleepMode": sleepmode.Warning,
 }
 
-func confirmExperimental(currentVClusterConfig *config.Config, currentValues string, log log.Logger) error {
+func confirmConfigIncompatibility(currentVClusterConfig *config.Config, currentValues string, log log.Logger) error {
 	if err := currentVClusterConfig.UnmarshalYAMLStrict([]byte(currentValues)); err != nil {
-		warning := config.ExperimentalWarning(log, []byte(currentValues), advisors)
+		warning := config.ConfigStructureWarning(log, []byte(currentValues), advisors)
 		if warning == "" {
 			warning = "The current configuration is not compatible with the version you're upgrading to."
 		}
@@ -437,7 +437,7 @@ func confirmExperimental(currentVClusterConfig *config.Config, currentValues str
 		log.Warn(warning)
 		if terminal.IsTerminalIn {
 			answer, qErr := log.Question(&survey.QuestionOptions{
-				Question:     "Formly experimental features that aren't manually migrated will be lost. Would you like to proceed?",
+				Question:     "The vCluster configuration structure has changed. Features that aren't manually migrated will be lost. Would you like to proceed?",
 				DefaultValue: "no",
 				Options:      []string{"no", "yes, I'll update my configuration later"},
 			})
