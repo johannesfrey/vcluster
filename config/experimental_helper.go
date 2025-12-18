@@ -8,13 +8,14 @@ import (
 )
 
 type (
-	ExperimentalConfig struct {
+	LegacyConfig struct {
 		Experimental map[string]any
+		SleepMode    map[string]any `yaml:"sleepMode,omitempty"`
 	}
 )
 
-func ExperimentalWarning(logger log.Logger, currentValues []byte, advisors map[string]func() string) string {
-	exp := &ExperimentalConfig{}
+func ConfigStructureWarning(logger log.Logger, currentValues []byte, advisors map[string]func() string) string {
+	exp := &LegacyConfig{}
 	if err := yaml.Unmarshal(currentValues, exp); err != nil {
 		logger.Warn(err)
 		return ""
@@ -27,6 +28,15 @@ func ExperimentalWarning(logger log.Logger, currentValues []byte, advisors map[s
 				advice = append(advice, warning)
 			}
 		}
+	}
+
+	if len(exp.SleepMode) != 0 {
+		if advisor, ok := advisors["sleepMode"]; ok {
+			if warning := advisor(); warning != "" {
+				return warning
+			}
+		}
+
 	}
 
 	if len(advice) == 0 {
